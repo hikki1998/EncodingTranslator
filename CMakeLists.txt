@@ -21,6 +21,8 @@ add_executable(EncodingTranslator WIN32
     src/SearchWorker.cpp
     src/ConvertWorker.h
     src/ConvertWorker.cpp
+    resources/app.qrc
+    resources/app.rc
 )
 
 target_link_libraries(EncodingTranslator PRIVATE Qt5::Core Qt5::Widgets Qt5::Concurrent)

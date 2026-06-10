@@ -25,6 +25,10 @@ cmake --build build --config Release --target test_search
 ./build/Release/test_search.exe
 ```
 
+## 协作约定
+
+- 当用户说“提交”时，默认执行 `git commit` 并随后 `git push` 到当前跟踪的 GitHub 远端分支。
+
 ## 架构
 
 ```
