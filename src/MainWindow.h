@@ -8,6 +8,7 @@ class QTreeWidget;
 class QLineEdit;
 class QPushButton;
 class QComboBox;
+class QCheckBox;
 class QSpinBox;
 class QProgressBar;
 class QLabel;
@@ -55,6 +56,7 @@ private:
     QLineEdit* m_excludeEdit = nullptr;
     QSpinBox* m_threadCountSpin = nullptr;
     QComboBox* m_targetCombo = nullptr;
+    QCheckBox* m_skipAsciiCheck = nullptr;
     QPushButton* m_searchButton = nullptr;
     QPushButton* m_convertButton = nullptr;
     QTreeWidget* m_tree = nullptr;

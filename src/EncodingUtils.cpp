@@ -101,6 +101,8 @@ QString encodingToString(TextEncoding encoding)
         return QStringLiteral("GBK");
     case TextEncoding::Ascii:
         return QStringLiteral("ASCII");
+    case TextEncoding::Utf8Bom:
+        return QStringLiteral("UTF-8 BOM");
     default:
         return QStringLiteral("Unknown");
     }
@@ -137,7 +139,7 @@ TextEncoding detectEncoding(const QByteArray& bytes)
         && static_cast<uchar>(bytes[1]) == 0xBB
         && static_cast<uchar>(bytes[2]) == 0xBF)
     {
-        return TextEncoding::Utf8;
+        return TextEncoding::Utf8Bom;
     }
 
     if (isLikelyUtf8(bytes))
@@ -261,7 +263,7 @@ bool convertFileEncoding(const QString& filePath, TextEncoding target, QString* 
     }
 
     QString unicodeText;
-    if (detected == TextEncoding::Utf8)
+    if (detected == TextEncoding::Utf8 || detected == TextEncoding::Utf8Bom)
     {
         QByteArray temp = raw;
         if (temp.startsWith("\xEF\xBB\xBF"))

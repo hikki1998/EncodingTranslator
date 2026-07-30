@@ -21,7 +21,7 @@ SearchWorker::SearchWorker(QObject* parent)
 
 void SearchWorker::process(const QString& rootDir, const QStringList& patterns,
                            TextEncoding targetEncoding, const QStringList& excludePatterns,
-                           int threadCount)
+                           bool skipAsciiFiles, int threadCount)
 {
     QFileInfo rootInfo(rootDir);
     if (!rootInfo.exists() || !rootInfo.isDir())
@@ -107,7 +107,7 @@ void SearchWorker::process(const QString& rootDir, const QStringList& patterns,
                 const QByteArray raw = f.read(kMaxReadSize);
                 f.close();
                 const TextEncoding enc = detectEncoding(raw);
-                if (!matchesTargetEncoding(enc, targetEncoding))
+                if ((!skipAsciiFiles || enc != TextEncoding::Ascii) && !matchesTargetEncoding(enc, targetEncoding))
                 {
                     QMutexLocker lock(resultMutex);
                     result->push_back(FileEncodingInfo{path, enc});

@@ -82,12 +82,14 @@ int main(int argc, char* argv[])
     }
 
     writeTextFile(rootDir + QStringLiteral("/src/file2.cpp"), QByteArray("int utf8 = 1;\n"));
+    writeTextFile(rootDir + QStringLiteral("/src/bom.cpp"), QByteArray("\xEF\xBB\xBFint bom = 1;\n"));
     writeTextFile(rootDir + QStringLiteral("/readme.txt"), QByteArray("plain text\n"));
     writeTextFile(rootDir + QStringLiteral("/build/generated.cpp"), gbk);
 
     const QStringList patterns = parseExtensionPatterns(QStringLiteral(".cpp,.h,.hpp,.c"));
     const TextEncoding target = TextEncoding::Utf8;
     const QStringList exclude = defaultExcludePatterns();
+    const bool skipAsciiFiles = true;
 
     QVector<QString> dirTasks;
     dirTasks.push_back(rootDir);
@@ -129,7 +131,7 @@ int main(int argc, char* argv[])
             {
                 const QByteArray raw = file.read(kMaxReadSize);
                 const TextEncoding encoding = detectEncoding(raw);
-                if (!matchesTargetEncoding(encoding, target))
+                if ((!skipAsciiFiles || encoding != TextEncoding::Ascii) && !matchesTargetEncoding(encoding, target))
                 {
                     QMutexLocker lock(&resultMutex);
                     allResults.push_back(FileEncodingInfo{path, encoding});
@@ -142,12 +144,22 @@ int main(int argc, char* argv[])
     future.waitForFinished();
 
     int gbkCount = 0;
+    int utf8BomCount = 0;
+    int asciiCount = 0;
     bool foundBuild = false;
     for (const FileEncodingInfo& result : allResults)
     {
         if (result.encoding == TextEncoding::Gbk)
         {
             ++gbkCount;
+        }
+        if (result.encoding == TextEncoding::Utf8Bom)
+        {
+            ++utf8BomCount;
+        }
+        if (result.encoding == TextEncoding::Ascii)
+        {
+            ++asciiCount;
         }
         if (result.filePath.contains(QStringLiteral("/build/")))
         {
@@ -157,11 +169,34 @@ int main(int argc, char* argv[])
 
     log(QStringLiteral("Scanned: %1").arg(scannedCount.loadRelaxed()));
     log(QStringLiteral("GBK files: %1").arg(gbkCount));
+    log(QStringLiteral("UTF-8 BOM files: %1").arg(utf8BomCount));
+    log(QStringLiteral("ASCII files: %1").arg(asciiCount));
     log(QStringLiteral("build excluded: %1").arg(foundBuild ? "no" : "yes"));
 
-    if (gbkCount != 7 || foundBuild || scannedCount.loadRelaxed() < 8)
+    if (gbkCount != 7 || utf8BomCount != 1 || asciiCount != 0 || foundBuild || scannedCount.loadRelaxed() < 9)
     {
         log(QStringLiteral("SOME TESTS FAILED"));
+        return 1;
+    }
+
+    QString convertError;
+    const QString bomPath = rootDir + QStringLiteral("/src/bom.cpp");
+    if (!convertFileEncoding(bomPath, TextEncoding::Utf8, &convertError))
+    {
+        log(QStringLiteral("BOM conversion failed: %1").arg(convertError));
+        return 1;
+    }
+
+    QFile convertedFile(bomPath);
+    if (!convertedFile.open(QIODevice::ReadOnly))
+    {
+        log(QStringLiteral("Failed to read converted BOM file"));
+        return 1;
+    }
+    const QByteArray convertedBytes = convertedFile.readAll();
+    if (convertedBytes.startsWith("\xEF\xBB\xBF") || detectEncoding(convertedBytes) != TextEncoding::Ascii)
+    {
+        log(QStringLiteral("BOM was not removed"));
         return 1;
     }
 

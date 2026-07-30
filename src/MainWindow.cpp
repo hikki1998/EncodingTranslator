@@ -4,6 +4,7 @@
 #include "SearchWorker.h"
 
 #include <QColor>
+#include <QCheckBox>
 #include <QComboBox>
 #include <QDir>
 #include <QFileDialog>
@@ -44,6 +45,8 @@ QColor encodingColor(TextEncoding encoding)
         return QColor(QStringLiteral("#b35c00"));
     case TextEncoding::Ascii:
         return QColor(QStringLiteral("#5c6670"));
+    case TextEncoding::Utf8Bom:
+        return QColor(QStringLiteral("#6f42c1"));
     default:
         return QColor(QStringLiteral("#b42318"));
     }
@@ -109,6 +112,10 @@ void MainWindow::setupUi()
     m_targetCombo->addItem(QStringLiteral("UTF-8"), static_cast<int>(TextEncoding::Utf8));
     m_targetCombo->setMinimumWidth(104);
 
+    m_skipAsciiCheck = new QCheckBox(QStringLiteral("Skip ASCII"), header);
+    m_skipAsciiCheck->setChecked(true);
+    m_skipAsciiCheck->setToolTip(QStringLiteral("Exclude ASCII files from search results"));
+
     auto* threadLabel = createFieldLabel(QStringLiteral("Threads"), header);
     threadLabel->setObjectName(QStringLiteral("headerFieldLabel"));
     m_threadCountSpin = new QSpinBox(header);
@@ -127,6 +134,7 @@ void MainWindow::setupUi()
 
     headerLayout->addWidget(targetLabel);
     headerLayout->addWidget(m_targetCombo);
+    headerLayout->addWidget(m_skipAsciiCheck);
     headerLayout->addWidget(threadLabel);
     headerLayout->addWidget(m_threadCountSpin);
     headerLayout->addWidget(m_searchButton);
@@ -417,6 +425,7 @@ void MainWindow::setSearchUiState(bool searching)
     m_extEdit->setEnabled(!searching);
     m_excludeEdit->setEnabled(!searching);
     m_targetCombo->setEnabled(!searching);
+    m_skipAsciiCheck->setEnabled(!searching);
     m_threadCountSpin->setEnabled(!searching);
 }
 
@@ -428,6 +437,7 @@ void MainWindow::setConvertUiState(bool converting)
     m_extEdit->setEnabled(!converting);
     m_excludeEdit->setEnabled(!converting);
     m_targetCombo->setEnabled(!converting);
+    m_skipAsciiCheck->setEnabled(!converting);
     m_threadCountSpin->setEnabled(!converting);
 }
 
@@ -525,6 +535,7 @@ void MainWindow::onSearch()
         Q_ARG(QStringList, patterns),
         Q_ARG(TextEncoding, currentTargetEncoding()),
         Q_ARG(QStringList, excludePatterns),
+        Q_ARG(bool, m_skipAsciiCheck->isChecked()),
         Q_ARG(int, m_threadCountSpin->value()));
 }
 

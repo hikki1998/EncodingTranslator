@@ -11,7 +11,8 @@ enum class TextEncoding
     Utf8 = 0,
     Gbk = 1,
     Ascii = 2,
-    Unknown = 3
+    Utf8Bom = 3,
+    Unknown = 4
 };
 Q_DECLARE_METATYPE(TextEncoding)
 
